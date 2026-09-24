@@ -1,0 +1,336 @@
+@{ ViewData["Title"] = "Dashboard"; }
+
+<div class="page-wrapper" style="padding:24px;min-height:100vh;background:linear-gradient(135deg,#0a0a0a 0%,#111827 50%,#0f172a 100%);">
+    <!-- Top Bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;max-width:1400px;margin-left:auto;margin-right:auto;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;background:linear-gradient(135deg,#10b981,#06b6d4);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="zap" style="width:20px;height:20px;color:white;"></i>
+            </div>
+            <div>
+                <div style="font-size:22px;font-weight:800;color:white;">Nutri<span style="color:#10b981;">AI</span></div>
+                <div style="font-size:13px;color:#64748b;">Stay on track with your nutrition goals</div>
+            </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 14px;font-size:12px;color:#94a3b8;">
+            @DateTime.Now.ToString("ddd, MMM dd")
+        </div>
+    </div>
+
+    <!-- 2x2 Grid -->
+    <div class="dash-grid">
+        <!-- Scan Meal Card -->
+        <div class="card" style="min-height:320px;display:flex;flex-direction:column;">
+            <div class="card-header">
+                <div class="icon-badge"><i data-lucide="camera" style="color:#10b981;"></i></div>
+                <div>
+                    <div class="card-title">Scan Meal Today</div>
+                    <div class="card-subtitle">AI-powered nutrition analysis</div>
+                </div>
+                <button class="btn-sm hidden" id="resetBtn" onclick="resetScan()" style="margin-left:auto;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#64748b;padding:6px;">
+                    <i data-lucide="x" style="width:16px;height:16px;"></i>
+                </button>
+            </div>
+
+            <!-- Dropzone -->
+            <div class="dropzone" id="dropzone" style="flex:1;" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)" />
+                <div class="dropzone-icon"><i data-lucide="upload" style="color:#10b981;"></i></div>
+                <p style="color:#cbd5e1;font-weight:500;font-size:14px;">Drop photo or click to upload</p>
+                <p style="color:#64748b;font-size:12px;">JPG, PNG, WEBP supported</p>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-wrap hidden" id="previewWrap" style="flex:1;">
+                <img id="previewImg" class="preview-img" alt="Meal" style="max-height:200px;" />
+                <div class="preview-overlay" id="analyzeOverlay">
+                    <div class="spinner"></div>
+                    <p style="color:#cbd5e1;font-size:14px;margin-top:8px;">Analyzing meal…</p>
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div class="alert alert-error hidden" id="scanError" style="margin-top:12px;">
+                <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i>
+                <p id="scanErrorText" style="font-size:12px;"></p>
+            </div>
+
+            <!-- Result -->
+            <div class="hidden" id="scanResult" style="margin-top:12px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:12px;padding:12px 14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span class="tag" id="resultMealType"><i data-lucide="check-circle" style="width:12px;height:12px;"></i> Meal</span>
+                    <span style="font-size:18px;font-weight:700;color:#10b981;" id="resultCalories">0 cal</span>
+                </div>
+                <div class="macro-row">
+                    <span class="macro-chip protein" id="resultProtein">P 0g</span>
+                    <span class="macro-chip carbs" id="resultCarbs">C 0g</span>
+                    <span class="macro-chip fats" id="resultFats">F 0g</span>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button class="btn btn-primary btn-block" style="margin-top:16px;" id="scanBtn" onclick="handleAction()">
+                <i data-lucide="zap" style="width:16px;height:16px;"></i> <span id="scanBtnText">Analyze Food</span>
+            </button>
+        </div>
+
+        <!-- Recent Analysis Card -->
+        <div class="card" style="min-height:320px;display:flex;flex-direction:column;">
+            <div class="card-header">
+                <div class="icon-badge cyan"><i data-lucide="flame" style="color:#06b6d4;"></i></div>
+                <div>
+                    <div class="card-title">Recent Analysis</div>
+                    <div class="card-subtitle">Last scanned meal</div>
+                </div>
+            </div>
+            @if (ViewBag.LastMeal != null)
+            {
+                var last = (Meal)ViewBag.LastMeal;
+                <div class="cal-hero">
+                    <p class="cal-number">@last.TotalCalories</p>
+                    <p class="cal-label">calories</p>
+                    <p class="meal-desc">@(last.Foods.FirstOrDefault()?.Name ?? last.MealType)</p>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:20px;flex:1;">
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin-bottom:4px;">
+                            <span style="color:#10b981;"><i data-lucide="beef" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> Protein</span>
+                            <span style="color:#cbd5e1;font-weight:600;">@(last.TotalProtein)g</span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill animated-bar" style="width:@(last.TotalCalories > 0 ? Math.Min(100, last.TotalProtein * 100 / Math.Max(1, last.TotalProtein + last.TotalCarbs + last.TotalFats)) : 0)%;background:#10b981;"></div></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin-bottom:4px;">
+                            <span style="color:#06b6d4;"><i data-lucide="flame" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> Carbs</span>
+                            <span style="color:#cbd5e1;font-weight:600;">@(last.TotalCarbs)g</span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill animated-bar" style="width:@(last.TotalCalories > 0 ? Math.Min(100, last.TotalCarbs * 100 / Math.Max(1, last.TotalProtein + last.TotalCarbs + last.TotalFats)) : 0)%;background:#06b6d4;"></div></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin-bottom:4px;">
+                            <span style="color:#f59e0b;"><i data-lucide="droplets" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> Fats</span>
+                            <span style="color:#cbd5e1;font-weight:600;">@(last.TotalFats)g</span>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill animated-bar" style="width:@(last.TotalCalories > 0 ? Math.Min(100, last.TotalFats * 100 / Math.Max(1, last.TotalProtein + last.TotalCarbs + last.TotalFats)) : 0)%;background:#f59e0b;"></div></div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+                    <i data-lucide="camera" style="width:48px;height:48px;color:#334155;"></i>
+                    <p style="color:#64748b;font-size:14px;">No meals scanned yet</p>
+                    <p style="color:#475569;font-size:12px;">Scan your first meal to see analysis</p>
+                </div>
+            }
+            <a href="/History" class="btn btn-ghost" style="margin-top:20px;width:100%;text-align:center;">View Full Report <i data-lucide="chevron-right" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i></a>
+        </div>
+
+        <!-- Daily Intake Card -->
+        <div class="card" style="min-height:320px;display:flex;flex-direction:column;">
+            <div class="card-header">
+                <div class="icon-badge"><i data-lucide="trending-up" style="color:#10b981;"></i></div>
+                <div style="flex:1;">
+                    <div class="card-title">Daily Intake</div>
+                    <div class="card-subtitle">Today's consumption</div>
+                </div>
+                <a href="/Analytics" style="font-size:12px;color:#06b6d4;display:flex;align-items:center;gap:4px;">All stats <i data-lucide="chevron-right" style="width:12px;height:12px;"></i></a>
+            </div>
+            @{
+                int todayP = (int)(ViewBag.TotalProtein ?? 0);
+                int todayC = (int)(ViewBag.TotalCarbs ?? 0);
+                int todayF = (int)(ViewBag.TotalFats ?? 0);
+                int totalMacros = todayP + todayC + todayF;
+                var profile = ViewBag.Profile as UserProfile;
+                int goalP = profile?.TargetProtein ?? 150;
+                int goalC = profile?.TargetCarbs ?? 200;
+                int goalF = profile?.TargetFats ?? 80;
+            }
+            <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:24px;margin-top:4px;">
+                <span style="font-size:48px;font-weight:900;color:white;letter-spacing:-1px;">@totalMacros</span>
+                <span style="color:#94a3b8;font-size:18px;margin-bottom:6px;font-weight:500;">g total macros</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:20px;flex:1;">
+                <div>
+                    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                        <span style="color:#94a3b8;">Carbohydrates</span>
+                        <span style="font-weight:600;color:#06b6d4;">@todayC g <span style="color:#475569;">/ @goalC g</span></span>
+                    </div>
+                    <div class="bar-track"><div class="bar-fill animated-bar" style="width:@(Math.Min(100, goalC > 0 ? todayC * 100 / goalC : 0))%;background:linear-gradient(90deg,rgba(6,182,212,0.8),#06b6d4);"></div></div>
+                </div>
+                <div>
+                    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                        <span style="color:#94a3b8;">Protein</span>
+                        <span style="font-weight:600;color:#10b981;">@todayP g <span style="color:#475569;">/ @goalP g</span></span>
+                    </div>
+                    <div class="bar-track"><div class="bar-fill animated-bar" style="width:@(Math.Min(100, goalP > 0 ? todayP * 100 / goalP : 0))%;background:linear-gradient(90deg,rgba(16,185,129,0.8),#10b981);"></div></div>
+                </div>
+                <div>
+                    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                        <span style="color:#94a3b8;">Fats</span>
+                        <span style="font-weight:600;color:#f59e0b;">@todayF g <span style="color:#475569;">/ @goalF g</span></span>
+                    </div>
+                    <div class="bar-track"><div class="bar-fill animated-bar" style="width:@(Math.Min(100, goalF > 0 ? todayF * 100 / goalF : 0))%;background:linear-gradient(90deg,rgba(245,158,11,0.8),#f59e0b);"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Trends Card -->
+        <div class="card" style="min-height:320px;display:flex;flex-direction:column;">
+            <div class="card-header">
+                <div class="icon-badge cyan"><i data-lucide="trending-up" style="color:#06b6d4;"></i></div>
+                <div style="flex:1;">
+                    <div class="card-title">Weekly Trends</div>
+                    <div class="card-subtitle">Calorie overview</div>
+                </div>
+                <a href="/Analytics" style="font-size:12px;color:#06b6d4;display:flex;align-items:center;gap:4px;">Details <i data-lucide="chevron-right" style="width:12px;height:12px;"></i></a>
+            </div>
+            <div style="flex:1;min-height:180px;">
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Weekly Chart
+    const weeklyData = @Html.Raw(ViewBag.WeeklyDataJson ?? "[]");
+    if (weeklyData.length > 0) {
+        const ctx = document.getElementById('weeklyChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: weeklyData.map(d => d.day),
+                datasets: [{
+                    label: 'Calories',
+                    data: weeklyData.map(d => d.calories),
+                    backgroundColor: weeklyData.map((_, i) => i === weeklyData.length - 1 ? '#10b981' : (i % 2 === 0 ? '#06b6d4' : '#0891b2')),
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => (v/1000).toFixed(1)+'k' } }
+                }
+            }
+        });
+    }
+
+    // AI Scanner Logic
+    let analysisData = null;
+    let previewUrl = null;
+
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        processFile(file);
+    }
+
+    async function processFile(file) {
+        document.getElementById('dropzone').classList.add('hidden');
+        document.getElementById('previewWrap').classList.remove('hidden');
+        document.getElementById('analyzeOverlay').style.display = 'flex';
+        document.getElementById('scanError').classList.add('hidden');
+        document.getElementById('scanResult').classList.add('hidden');
+        document.getElementById('resetBtn').classList.remove('hidden');
+
+        previewUrl = URL.createObjectURL(file);
+        document.getElementById('previewImg').src = previewUrl;
+
+        const fd = new FormData();
+        fd.append('image', file);
+
+        try {
+            const res = await fetch('/Dashboard/AnalyzeFood', { method: 'POST', body: fd });
+            const data = await res.json();
+
+            document.getElementById('analyzeOverlay').style.display = 'none';
+
+            if (data.error) {
+                document.getElementById('scanError').classList.remove('hidden');
+                document.getElementById('scanErrorText').textContent = data.error;
+            } else if (data.data) {
+                analysisData = data.data;
+                document.getElementById('scanResult').classList.remove('hidden');
+                document.getElementById('resultMealType').innerHTML = '<i data-lucide="check-circle" style="width:12px;height:12px;"></i> ' + (data.data.mealType || 'Meal');
+                document.getElementById('resultCalories').textContent = (data.data.totalCalories || 0) + ' cal';
+                document.getElementById('resultProtein').textContent = 'P ' + (data.data.totalProtein || 0) + 'g';
+                document.getElementById('resultCarbs').textContent = 'C ' + (data.data.totalCarbs || 0) + 'g';
+                document.getElementById('resultFats').textContent = 'F ' + (data.data.totalFats || 0) + 'g';
+                document.getElementById('scanBtnText').textContent = 'Save Meal';
+                lucide.createIcons();
+            }
+        } catch {
+            document.getElementById('analyzeOverlay').style.display = 'none';
+            document.getElementById('scanError').classList.remove('hidden');
+            document.getElementById('scanErrorText').textContent = 'Failed to analyze. Please try again.';
+        }
+    }
+
+    async function handleAction() {
+        if (analysisData) {
+            document.getElementById('scanBtnText').textContent = 'Saving...';
+            const body = {
+                mealType: analysisData.mealType || analysisData.meal_type || 'meal',
+                totalCalories: analysisData.totalCalories || analysisData.total_calories || 0,
+                totalProtein: analysisData.totalProtein || analysisData.total_protein || 0,
+                totalCarbs: analysisData.totalCarbs || analysisData.total_carbs || 0,
+                totalFats: analysisData.totalFats || analysisData.total_fats || 0,
+                healthTip: analysisData.healthTip || analysisData.health_tip || '',
+                foods: (analysisData.foods || []).map(f => ({
+                    name: f.name || 'Unknown',
+                    portionSize: f.portionSize || f.portion_size || 'N/A',
+                    calories: f.calories || 0,
+                    protein: f.protein || 0,
+                    carbs: f.carbs || 0,
+                    fats: f.fats || 0,
+                    confidence: f.confidence || 'Low'
+                }))
+            };
+            try {
+                const res = await fetch('/Dashboard/SaveMeal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('Meal saved successfully!');
+                    location.reload();
+                } else {
+                    alert(result.error || 'Failed to save');
+                    document.getElementById('scanBtnText').textContent = 'Save Meal';
+                }
+            } catch {
+                alert('Network error. Please try again.');
+                document.getElementById('scanBtnText').textContent = 'Save Meal';
+            }
+        } else {
+            document.getElementById('fileInput').click();
+        }
+    }
+
+    function resetScan() {
+        analysisData = null;
+        previewUrl = null;
+        document.getElementById('dropzone').classList.remove('hidden');
+        document.getElementById('previewWrap').classList.add('hidden');
+        document.getElementById('scanError').classList.add('hidden');
+        document.getElementById('scanResult').classList.add('hidden');
+        document.getElementById('resetBtn').classList.add('hidden');
+        document.getElementById('scanBtnText').textContent = 'Analyze Food';
+        document.getElementById('fileInput').value = '';
+    }
+
+    // Drag & Drop
+    const dz = document.getElementById('dropzone');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('active'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('active'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('active'); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) processFile(f); });
+</script>
+}

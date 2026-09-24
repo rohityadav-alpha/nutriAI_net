@@ -1,0 +1,88 @@
+@{
+    var currentPath = Context.Request.Path.Value?.ToLower() ?? "/";
+    bool isAuthenticated = User.Identity?.IsAuthenticated == true;
+}
+
+@if (isAuthenticated)
+{
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a href="/Dashboard" class="navbar-logo">
+            <div class="navbar-logo-icon">
+                <i data-lucide="leaf"></i>
+            </div>
+            <div class="navbar-brand">Nutri<span>AI</span></div>
+        </a>
+
+        <div class="navbar-links">
+            <a href="/Dashboard" class="nav-link @(currentPath.Contains("dashboard") ? "active" : "")">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/Analytics" class="nav-link @(currentPath.Contains("analytics") ? "active" : "")">
+                <i data-lucide="trending-up"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="/History" class="nav-link @(currentPath.Contains("history") ? "active" : "")">
+                <i data-lucide="history"></i>
+                <span>History</span>
+            </a>
+            <a href="/Calculator" class="nav-link @(currentPath.Contains("calculator") ? "active" : "")">
+                <i data-lucide="calculator"></i>
+                <span>Calculator</span>
+            </a>
+            <a href="/Profile" class="nav-link @(currentPath.Contains("profile") ? "active" : "")">
+                <i data-lucide="user"></i>
+                <span>Profile</span>
+            </a>
+        </div>
+
+        <div class="navbar-auth">
+            <a href="/Profile" class="nav-link" style="padding: 6px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,0.2);border:2px solid rgba(16,185,129,0.4);display:flex;align-items:center;justify-content:center;">
+                    <i data-lucide="user" style="width:16px;height:16px;color:#10b981;"></i>
+                </div>
+            </a>
+        </div>
+
+        <button class="navbar-mobile-toggle" onclick="toggleMobileMenu()">
+            <i data-lucide="menu" id="menuIcon"></i>
+        </button>
+    </div>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="/Dashboard" class="nav-link @(currentPath.Contains("dashboard") ? "active" : "")" onclick="closeMobileMenu()">
+            <i data-lucide="layout-dashboard"></i> Dashboard
+        </a>
+        <a href="/Analytics" class="nav-link @(currentPath.Contains("analytics") ? "active" : "")" onclick="closeMobileMenu()">
+            <i data-lucide="trending-up"></i> Analytics
+        </a>
+        <a href="/History" class="nav-link @(currentPath.Contains("history") ? "active" : "")" onclick="closeMobileMenu()">
+            <i data-lucide="history"></i> History
+        </a>
+        <a href="/Calculator" class="nav-link @(currentPath.Contains("calculator") ? "active" : "")" onclick="closeMobileMenu()">
+            <i data-lucide="calculator"></i> Calculator
+        </a>
+        <a href="/Profile" class="nav-link @(currentPath.Contains("profile") ? "active" : "")" onclick="closeMobileMenu()">
+            <i data-lucide="user"></i> Profile
+        </a>
+        <div style="padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);margin-top:12px;">
+            <form method="post" action="/Account/Logout">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger btn-block">
+                    <i data-lucide="log-out" style="width:16px;height:16px;"></i> Sign Out
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+}
+
+<script>
+    function toggleMobileMenu() {
+        document.getElementById('mobileMenu').classList.toggle('open');
+    }
+    function closeMobileMenu() {
+        document.getElementById('mobileMenu').classList.remove('open');
+    }
+</script>

@@ -1,0 +1,135 @@
+@model AnalyticsViewModel
+@{ ViewData["Title"] = "Analytics"; }
+
+<div class="page-content">
+    <div class="page-header animate-in">
+        <h1><i data-lucide="trending-up"></i> Analytics</h1>
+        <p>Last 30 days insights</p>
+    </div>
+
+    @if (ViewBag.HasData != true)
+    {
+        <div class="card card-no-hover" style="padding:48px;text-align:center;">
+            <i data-lucide="trending-up" style="width:56px;height:56px;color:#334155;margin:0 auto 16px;display:block;"></i>
+            <h3 style="font-size:20px;font-weight:600;color:white;margin-bottom:8px;">No Data Yet</h3>
+            <p style="color:#94a3b8;">Start logging meals to see your analytics!</p>
+        </div>
+    }
+    else
+    {
+        <!-- Stats Cards -->
+        <div class="grid grid-4 mb-8">
+            <div class="stat-card stat-card-accent animate-in">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span class="stat-label">Total Meals</span>
+                    <div style="padding:8px;border-radius:8px;background:rgba(16,185,129,0.1);"><i data-lucide="flame" style="width:16px;height:16px;color:#10b981;"></i></div>
+                </div>
+                <p class="stat-value" style="color:#10b981;">@Model.TotalMeals</p>
+            </div>
+            <div class="stat-card animate-in animate-delay-1" style="border-left:3px solid #06b6d4;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span class="stat-label">Avg Calories</span>
+                    <div style="padding:8px;border-radius:8px;background:rgba(6,182,212,0.1);"><i data-lucide="activity" style="width:16px;height:16px;color:#06b6d4;"></i></div>
+                </div>
+                <p class="stat-value" style="color:#06b6d4;">@Model.AvgCalories kcal</p>
+            </div>
+            <div class="stat-card stat-card-accent animate-in animate-delay-2">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span class="stat-label">Total Protein</span>
+                    <div style="padding:8px;border-radius:8px;background:rgba(16,185,129,0.1);"><i data-lucide="beef" style="width:16px;height:16px;color:#10b981;"></i></div>
+                </div>
+                <p class="stat-value" style="color:#10b981;">@(Model.TotalProtein)g</p>
+            </div>
+            <div class="stat-card animate-in animate-delay-3" style="border-left:3px solid #14b8a6;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span class="stat-label">Total Carbs</span>
+                    <div style="padding:8px;border-radius:8px;background:rgba(20,184,166,0.1);"><i data-lucide="wheat" style="width:16px;height:16px;color:#14b8a6;"></i></div>
+                </div>
+                <p class="stat-value" style="color:#14b8a6;">@(Model.TotalCarbs)g</p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-2 mb-6">
+            <div class="card card-no-hover animate-in animate-delay-2">
+                <h3 style="color:white;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:8px;">
+                    <i data-lucide="trending-up" style="width:20px;height:20px;color:#10b981;"></i> Daily Calorie Intake
+                </h3>
+                <div style="height:280px;"><canvas id="calorieChart"></canvas></div>
+            </div>
+            <div class="card card-no-hover animate-in animate-delay-3">
+                <h3 style="color:white;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:8px;">
+                    <i data-lucide="activity" style="width:20px;height:20px;color:#06b6d4;"></i> Daily Macros Breakdown
+                </h3>
+                <div style="height:280px;"><canvas id="macroChart"></canvas></div>
+            </div>
+            <div class="card card-no-hover animate-in animate-delay-4">
+                <h3 style="color:white;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:8px;">
+                    <i data-lucide="flame" style="width:20px;height:20px;color:#10b981;"></i> Meal Type Distribution
+                </h3>
+                <div style="height:280px;"><canvas id="mealDistChart"></canvas></div>
+            </div>
+            <div class="card card-no-hover animate-in animate-delay-5">
+                <h3 style="color:white;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:8px;">
+                    <i data-lucide="award" style="width:20px;height:20px;color:#06b6d4;"></i> Macro Distribution (%)
+                </h3>
+                <div style="height:200px;"><canvas id="macroDistChart"></canvas></div>
+                <div class="grid grid-3 mt-4" style="gap:12px;">
+                    <div style="padding:12px;border-radius:12px;text-align:center;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.15);">
+                        <p style="font-weight:700;font-size:18px;color:#10b981;">@(Model.TotalProtein)g</p>
+                        <p style="font-size:12px;color:#94a3b8;">Protein</p>
+                    </div>
+                    <div style="padding:12px;border-radius:12px;text-align:center;background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.15);">
+                        <p style="font-weight:700;font-size:18px;color:#06b6d4;">@(Model.TotalCarbs)g</p>
+                        <p style="font-size:12px;color:#94a3b8;">Carbs</p>
+                    </div>
+                    <div style="padding:12px;border-radius:12px;text-align:center;background:rgba(20,184,166,0.07);border:1px solid rgba(20,184,166,0.15);">
+                        <p style="font-weight:700;font-size:18px;color:#14b8a6;">@(Model.TotalFats)g</p>
+                        <p style="font-size:12px;color:#94a3b8;">Fats</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    const chartData = @Html.Raw(ViewBag.ChartDataJson ?? "[]");
+    const mealDist = @Html.Raw(ViewBag.MealDistJson ?? "[]");
+    const macroDist = @Html.Raw(ViewBag.MacroDistJson ?? "[]");
+    const COLORS = ['#10b981','#06b6d4','#14b8a6','#34d399'];
+    const gridColor = 'rgba(255,255,255,0.03)';
+    const tickColor = '#94a3b8';
+
+    if (chartData.length > 0) {
+        // Calorie Line Chart
+        new Chart(document.getElementById('calorieChart'), {
+            type: 'line', data: { labels: chartData.map(d=>d.date), datasets: [{ label: 'Calories', data: chartData.map(d=>d.calories), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', borderWidth: 2.5, pointBackgroundColor: '#10b981', pointRadius: 4, tension: 0.3, fill: true }] },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:tickColor}}}, scales:{ x:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11}}}, y:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11}}} } }
+        });
+
+        // Macro Bar Chart
+        new Chart(document.getElementById('macroChart'), {
+            type: 'bar', data: { labels: chartData.map(d=>d.date), datasets: [
+                { label:'Protein (g)', data:chartData.map(d=>d.protein), backgroundColor:'#10b981', borderRadius:4 },
+                { label:'Carbs (g)', data:chartData.map(d=>d.carbs), backgroundColor:'#06b6d4', borderRadius:4 },
+                { label:'Fats (g)', data:chartData.map(d=>d.fats), backgroundColor:'#14b8a6', borderRadius:4 }
+            ]},
+            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:tickColor}}}, scales:{ x:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11}}}, y:{grid:{color:gridColor},ticks:{color:tickColor,font:{size:11}}} } }
+        });
+
+        // Meal Distribution Pie
+        new Chart(document.getElementById('mealDistChart'), {
+            type: 'pie', data: { labels: mealDist.map(d=>d.name), datasets: [{ data: mealDist.map(d=>d.value), backgroundColor: COLORS }] },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{labels:{color:tickColor}}, tooltip:{backgroundColor:'#0f172a',borderColor:'rgba(255,255,255,0.1)',borderWidth:1} } }
+        });
+
+        // Macro Distribution Doughnut
+        new Chart(document.getElementById('macroDistChart'), {
+            type: 'doughnut', data: { labels: macroDist.map(d=>d.name), datasets: [{ data: macroDist.map(d=>d.value), backgroundColor: macroDist.map(d=>d.color) }] },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{labels:{color:tickColor}} } }
+        });
+    }
+</script>
+}

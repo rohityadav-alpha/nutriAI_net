@@ -1,0 +1,155 @@
+@model List<Meal>
+@{ ViewData["Title"] = "Meal History"; }
+
+<div class="page-content">
+    <div class="page-header animate-in">
+        <h1><i data-lucide="calendar"></i> Meal History</h1>
+        <p>Track your nutrition journey</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="card card-no-hover mb-6 animate-in animate-delay-1">
+        <form method="get" action="/History" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:end;">
+            <div>
+                <label class="form-label">Meal Type</label>
+                @{
+                    string filterMT = ViewBag.FilterMealType ?? "all";
+                }
+                <select name="mealType" class="form-select">
+                    <option value="all" selected="@(filterMT == "all")">All</option>
+                    <option value="breakfast" selected="@(filterMT == "breakfast")">Breakfast</option>
+                    <option value="lunch" selected="@(filterMT == "lunch")">Lunch</option>
+                    <option value="dinner" selected="@(filterMT == "dinner")">Dinner</option>
+                    <option value="snack" selected="@(filterMT == "snack")">Snack</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">From</label>
+                <input type="date" name="startDate" class="form-input" value="@ViewBag.FilterStartDate" />
+            </div>
+            <div>
+                <label class="form-label">To</label>
+                <input type="date" name="endDate" class="form-input" value="@ViewBag.FilterEndDate" />
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button type="submit" class="btn btn-primary flex-1">Apply</button>
+                <a href="/History" class="btn btn-secondary flex-1" style="text-align:center;">Clear</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-5 mb-8">
+        <div class="stat-card stat-card-accent animate-in animate-delay-1">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span class="stat-label">Total Meals</span>
+                <i data-lucide="flame" style="width:16px;height:16px;color:#10b981;"></i>
+            </div>
+            <p class="stat-value" style="color:#10b981;">@ViewBag.TotalMeals</p>
+            <p style="font-size:11px;color:#64748b;margin-top:4px;">Last 7 days</p>
+        </div>
+        <div class="stat-card animate-in animate-delay-2" style="border-left:3px solid #06b6d4;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span class="stat-label">Total Calories</span>
+                <i data-lucide="zap" style="width:16px;height:16px;color:#06b6d4;"></i>
+            </div>
+            <p class="stat-value" style="color:#06b6d4;">@ViewBag.TotalCalories</p>
+            <p style="font-size:11px;color:#64748b;margin-top:4px;">Last 7 days</p>
+        </div>
+        <div class="stat-card animate-in animate-delay-3" style="border-left:3px solid #14b8a6;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span class="stat-label">Avg Calories</span>
+                <i data-lucide="trending-up" style="width:16px;height:16px;color:#14b8a6;"></i>
+            </div>
+            <p class="stat-value" style="color:#14b8a6;">@ViewBag.AvgCalories</p>
+            <p style="font-size:11px;color:#64748b;margin-top:4px;">Last 7 days</p>
+        </div>
+        <div class="stat-card stat-card-accent animate-in animate-delay-4">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span class="stat-label">Total Protein</span>
+                <i data-lucide="beef" style="width:16px;height:16px;color:#10b981;"></i>
+            </div>
+            <p class="stat-value" style="color:#10b981;">@(ViewBag.TotalProtein)g</p>
+            <p style="font-size:11px;color:#64748b;margin-top:4px;">Last 7 days</p>
+        </div>
+        <div class="stat-card animate-in animate-delay-5" style="border-left:3px solid #06b6d4;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span class="stat-label">Total Carbs</span>
+                <i data-lucide="wheat" style="width:16px;height:16px;color:#06b6d4;"></i>
+            </div>
+            <p class="stat-value" style="color:#06b6d4;">@(ViewBag.TotalCarbs)g</p>
+            <p style="font-size:11px;color:#64748b;margin-top:4px;">Last 7 days</p>
+        </div>
+    </div>
+
+    <!-- Meals List -->
+    @if (Model.Count == 0)
+    {
+        <div class="card card-no-hover" style="padding:64px;text-align:center;">
+            <i data-lucide="camera" style="width:56px;height:56px;color:#334155;margin:0 auto 16px;display:block;"></i>
+            <h3 style="font-size:20px;font-weight:600;color:white;margin-bottom:8px;">No meals found</h3>
+            <p style="color:#94a3b8;margin-bottom:24px;">Try changing filters or scan a new meal.</p>
+            <a href="/Dashboard" class="btn btn-primary">Scan a Meal</a>
+        </div>
+    }
+    else
+    {
+        <div style="display:flex;flex-direction:column;gap:16px;">
+            @foreach (var meal in Model)
+            {
+                <div class="card card-no-hover animate-in">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <span class="tag">@meal.MealType</span>
+                            <span style="color:#94a3b8;font-size:14px;">@meal.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <p style="font-size:24px;font-weight:700;color:#10b981;">@meal.TotalCalories</p>
+                            <p style="font-size:12px;color:#94a3b8;">calories</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-3 mb-4" style="gap:12px;">
+                        <div style="padding:12px;border-radius:12px;text-align:center;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.15);">
+                            <i data-lucide="beef" style="width:16px;height:16px;color:#10b981;margin:0 auto 4px;display:block;"></i>
+                            <p style="font-weight:700;color:#10b981;">@(meal.TotalProtein)g</p>
+                            <p style="font-size:12px;color:#94a3b8;">Protein</p>
+                        </div>
+                        <div style="padding:12px;border-radius:12px;text-align:center;background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.15);">
+                            <i data-lucide="wheat" style="width:16px;height:16px;color:#06b6d4;margin:0 auto 4px;display:block;"></i>
+                            <p style="font-weight:700;color:#06b6d4;">@(meal.TotalCarbs)g</p>
+                            <p style="font-size:12px;color:#94a3b8;">Carbs</p>
+                        </div>
+                        <div style="padding:12px;border-radius:12px;text-align:center;background:rgba(20,184,166,0.07);border:1px solid rgba(20,184,166,0.15);">
+                            <i data-lucide="droplet" style="width:16px;height:16px;color:#14b8a6;margin:0 auto 4px;display:block;"></i>
+                            <p style="font-weight:700;color:#14b8a6;">@(meal.TotalFats)g</p>
+                            <p style="font-size:12px;color:#94a3b8;">Fats</p>
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
+                        <h4 style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">Items</h4>
+                        @foreach (var food in meal.Foods)
+                        {
+                            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;">
+                                <div>
+                                    <span style="color:#e2e8f0;font-weight:500;text-transform:capitalize;">@food.Name</span>
+                                    <span style="color:#64748b;font-size:12px;margin-left:8px;">(@food.PortionSize)</span>
+                                </div>
+                                <span style="color:#cbd5e1;font-weight:600;">@food.Calories cal</span>
+                            </div>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(meal.HealthTip))
+                    {
+                        <div class="alert alert-info" style="margin-top:16px;margin-bottom:0;">
+                            <i data-lucide="activity" style="width:16px;height:16px;color:#06b6d4;flex-shrink:0;margin-top:2px;"></i>
+                            <p style="font-size:12px;"><strong style="color:#22d3ee;">Health Tip:</strong> @meal.HealthTip</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

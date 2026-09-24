@@ -1,0 +1,153 @@
+@{ ViewData["Title"] = "Nutrition Calculator"; }
+
+<div class="page-content">
+    <div class="page-header animate-in">
+        <a href="/Dashboard" style="display:inline-flex;align-items:center;gap:8px;color:#94a3b8;font-size:14px;margin-bottom:20px;">
+            <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Back to Scanner
+        </a>
+        <h1><i data-lucide="calculator"></i> Nutrition Calculator</h1>
+        <p>Calculate your daily calorie and macro needs</p>
+    </div>
+
+    <div class="grid grid-2">
+        <!-- Input Form -->
+        <div class="card card-no-hover animate-in animate-delay-1">
+            <h2 style="font-size:18px;font-weight:700;color:white;margin-bottom:24px;display:flex;align-items:center;gap:8px;">
+                <i data-lucide="activity" style="width:20px;height:20px;color:#10b981;"></i> Your Details
+            </h2>
+            <div class="form-group">
+                <label class="form-label">Weight (kg)</label>
+                <input type="number" id="weight" class="form-input" placeholder="e.g., 70" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Height (cm)</label>
+                <input type="number" id="height" class="form-input" placeholder="e.g., 175" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Age (years)</label>
+                <input type="number" id="age" class="form-input" placeholder="e.g., 25" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gender</label>
+                <div style="display:flex;gap:12px;">
+                    <button id="genderMale" onclick="setGender('male')" class="btn flex-1" style="padding:10px;background:rgba(16,185,129,0.2);color:#10b981;border:1px solid rgba(16,185,129,0.5);">Male</button>
+                    <button id="genderFemale" onclick="setGender('female')" class="btn flex-1" style="padding:10px;background:rgba(30,41,59,0.5);color:#94a3b8;border:1px solid rgba(71,85,105,0.4);">Female</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Activity Level</label>
+                <select id="activity" class="form-select">
+                    <option value="sedentary">Sedentary (little or no exercise)</option>
+                    <option value="light">Light (exercise 1-3 days/week)</option>
+                    <option value="moderate" selected>Moderate (exercise 3-5 days/week)</option>
+                    <option value="active">Active (hard exercise 6-7 days/week)</option>
+                    <option value="veryActive">Very Active (intense exercise daily)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Your Goal</label>
+                <select id="goal" class="form-select">
+                    <option value="lose">Lose Weight</option>
+                    <option value="maintain" selected>Maintain Weight</option>
+                    <option value="gain">Gain Muscle</option>
+                </select>
+            </div>
+            <button class="btn btn-primary btn-block" style="padding:14px;margin-top:8px;" onclick="calculateNutrition()" id="calcBtn">
+                <i data-lucide="calculator" style="width:20px;height:20px;"></i> <span id="calcBtnText">Calculate My Needs</span>
+            </button>
+        </div>
+
+        <!-- Results -->
+        <div class="card card-no-hover animate-in animate-delay-2">
+            <h2 style="font-size:18px;font-weight:700;color:white;margin-bottom:24px;display:flex;align-items:center;gap:8px;">
+                <i data-lucide="flame" style="width:20px;height:20px;color:#10b981;"></i> Your Daily Needs
+            </h2>
+            <div id="resultPlaceholder" style="text-align:center;padding:64px 0;">
+                <div style="width:80px;height:80px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15);">
+                    <i data-lucide="calculator" style="width:40px;height:40px;color:#334155;"></i>
+                </div>
+                <p style="color:#94a3b8;font-size:14px;max-width:280px;margin:0 auto;">Fill in your details and click calculate to see your personalized nutrition plan</p>
+            </div>
+            <div id="resultContent" class="hidden"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let gender = 'male';
+    function setGender(g) {
+        gender = g;
+        document.getElementById('genderMale').style.background = g === 'male' ? 'rgba(16,185,129,0.2)' : 'rgba(30,41,59,0.5)';
+        document.getElementById('genderMale').style.color = g === 'male' ? '#10b981' : '#94a3b8';
+        document.getElementById('genderMale').style.borderColor = g === 'male' ? 'rgba(16,185,129,0.5)' : 'rgba(71,85,105,0.4)';
+        document.getElementById('genderFemale').style.background = g === 'female' ? 'rgba(16,185,129,0.2)' : 'rgba(30,41,59,0.5)';
+        document.getElementById('genderFemale').style.color = g === 'female' ? '#10b981' : '#94a3b8';
+        document.getElementById('genderFemale').style.borderColor = g === 'female' ? 'rgba(16,185,129,0.5)' : 'rgba(71,85,105,0.4)';
+    }
+
+    async function calculateNutrition() {
+        const w = parseFloat(document.getElementById('weight').value);
+        const h = parseFloat(document.getElementById('height').value);
+        const a = parseInt(document.getElementById('age').value);
+        if (!w || !h || !a) { alert('Please fill all fields'); return; }
+
+        document.getElementById('calcBtnText').textContent = 'Calculating...';
+        const res = await fetch('/Calculator/Calculate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ weight: w, height: h, age: a, gender, activityLevel: document.getElementById('activity').value, goal: document.getElementById('goal').value })
+        });
+        const r = await res.json();
+        document.getElementById('calcBtnText').textContent = 'Calculate My Needs';
+
+        if (r.error) { alert(r.error); return; }
+
+        document.getElementById('resultPlaceholder').classList.add('hidden');
+        const c = document.getElementById('resultContent');
+        c.classList.remove('hidden');
+
+        const macros = [
+            { icon: 'flame', label: 'Daily Calories', unit: '', min: r.caloriesMin, max: r.caloriesMax, color: '#10b981' },
+            { icon: 'beef', label: 'Protein', unit: 'g', min: r.proteinMin, max: r.proteinMax, color: '#06b6d4' },
+            { icon: 'wheat', label: 'Carbohydrates', unit: 'g', min: r.carbsMin, max: r.carbsMax, color: '#14b8a6' },
+            { icon: 'droplet', label: 'Fats', unit: 'g', min: r.fatsMin, max: r.fatsMax, color: '#10b981' }
+        ];
+
+        c.innerHTML = `
+            <div class="grid grid-2 mb-4" style="gap:12px;">
+                <div style="padding:16px;border-radius:12px;text-align:center;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.15);">
+                    <p style="font-size:12px;font-weight:500;color:#10b981;margin-bottom:4px;">BMR</p>
+                    <p style="font-size:24px;font-weight:700;color:#10b981;">${r.bmr}</p>
+                    <p style="font-size:12px;color:#94a3b8;margin-top:4px;">cal/day (at rest)</p>
+                </div>
+                <div style="padding:16px;border-radius:12px;text-align:center;background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.15);">
+                    <p style="font-size:12px;font-weight:500;color:#06b6d4;margin-bottom:4px;">TDEE</p>
+                    <p style="font-size:24px;font-weight:700;color:#06b6d4;">${r.tdee}</p>
+                    <p style="font-size:12px;color:#94a3b8;margin-top:4px;">cal/day (with activity)</p>
+                </div>
+            </div>
+            ${macros.map(m => `
+                <div style="padding:16px;border-radius:12px;margin-bottom:12px;background:${m.color}0d;border:1px solid ${m.color}20;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                        <span style="font-weight:500;color:${m.color};font-size:14px;display:flex;align-items:center;gap:8px;">
+                            <i data-lucide="${m.icon}" style="width:16px;height:16px;"></i> ${m.label}
+                        </span>
+                        <span style="font-size:12px;color:#94a3b8;">${m.min}${m.unit} – ${m.max}${m.unit}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:14px;font-weight:700;color:${m.color};">${m.min}${m.unit}</span>
+                        <div class="bar-track" style="flex:1;"><div class="bar-fill" style="width:65%;background:linear-gradient(90deg,${m.color},${m.color}80);"></div></div>
+                        <span style="font-size:14px;font-weight:700;color:${m.color};">${m.max}${m.unit}</span>
+                    </div>
+                </div>
+            `).join('')}
+            <div class="alert alert-info" style="margin-bottom:0;">
+                <i data-lucide="activity" style="width:16px;height:16px;color:#06b6d4;flex-shrink:0;margin-top:2px;"></i>
+                <p style="font-size:12px;"><strong style="color:#22d3ee;">Note:</strong> These are estimates based on the Mifflin-St Jeor equation. Individual needs may vary.</p>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+</script>
+}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - NutriAI</title>
+    <meta name="description" content="AI-powered nutrition tracking. Snap a photo of your meal and get instant calorie and macro analysis." />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.446.0/dist/umd/lucide.js"></script>
+</head>
+<body class="ambient-bg">
+    @if (ViewData["HideNavbar"] == null)
+    {
+        @await Html.PartialAsync("_Navbar")
+        <div class="navbar-spacer"></div>
+    }
+
+    @RenderBody()
+
+    <script>
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
